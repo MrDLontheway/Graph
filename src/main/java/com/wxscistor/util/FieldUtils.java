@@ -14,6 +14,7 @@ import org.vertexium.type.GeoPoint;
  */
 public class FieldUtils {
     public static String[] getEsFieldNames(AccumuloGraph graph, String fieldName, String... auths){
+        //fieldName = fieldName.replace(".","-");
         PropertyDefinition propertyDefinition = graph.getPropertyDefinition(fieldName);
         String[] propertyNames = ((Elasticsearch5SearchIndex) graph.getSearchIndex()).getPropertyNames(graph,fieldName, new AccumuloAuthorizations(auths));
         if (propertyDefinition.getDataType() == GeoPoint.class) {

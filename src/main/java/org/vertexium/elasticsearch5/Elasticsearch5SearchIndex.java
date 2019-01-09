@@ -2305,12 +2305,13 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
     }
 
     public String[] getPropertyNames(Graph graph, String propertyName, Authorizations authorizations) {
+        propertyName = propertyName.replace(".","-");
         String[] allMatchingPropertyNames = getAllMatchingPropertyNames(graph, propertyName, authorizations);
         return Arrays.stream(allMatchingPropertyNames)
                 .map(this::replaceFieldnameDots)
-                .map((x)->{
+                /*.map((x)->{
                     return x.replace(".","-");
-                })
+                })*/
                 .collect(Collectors.toList())
                 .toArray(new String[allMatchingPropertyNames.length]);
     }

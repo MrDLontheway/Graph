@@ -216,7 +216,6 @@ public class ElasticsearchSearchQueryBase extends QueryBase {
         }
 
         applySort(searchRequestBuilder);
-
         return searchRequestBuilder;
     }
 
@@ -1234,6 +1233,9 @@ public class ElasticsearchSearchQueryBase extends QueryBase {
             query = createQueryStringQuery((QueryStringQueryParameters) queryParameters);
         } else if (queryParameters instanceof SimilarToTextQueryParameters) {
             query = createSimilarToTextQuery((SimilarToTextQueryParameters) queryParameters);
+            //TODO SimilarToGraphQuery setting
+            ((SimilarToGraphQuery) query).minDocFrequency(0);
+            ((SimilarToGraphQuery) query).minTermFrequency(0);
         } else {
             throw new VertexiumException("Query parameters not supported of type: " + queryParameters.getClass().getName());
         }
@@ -1899,4 +1901,18 @@ public class ElasticsearchSearchQueryBase extends QueryBase {
             return this;
         }
     }
+
+    //TODO dl es count add
+//    public SearchResponse getSearchResponse(){
+//        se
+//    }
+//
+//    @Override
+//    public QueryResultsIterable<? extends VertexiumObject> dlSearch(EnumSet<VertexiumObjectType> objectTypes, FetchHints fetchHints) {
+//        validateQueryString();
+//        if (shouldUseScrollApi()) {
+//            return searchScroll(objectTypes, fetchHints).;
+//        }
+//        return searchPaged(objectTypes, fetchHints);
+//    }
 }

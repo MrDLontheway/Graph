@@ -1,9 +1,7 @@
 package com.wxscistor.config;
 
 import com.wxscistor.util.AuthUtils;
-import org.apache.accumulo.core.client.Connector;
-import org.apache.accumulo.core.client.Instance;
-import org.apache.accumulo.core.client.ZooKeeperInstance;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.admin.*;
 import org.apache.accumulo.core.security.Authorizations;
 import java.io.InputStream;
@@ -92,21 +90,25 @@ public class AccumuloConnector {
         }
     }
 
-    public static synchronized String addAuths(String user,String addAuth) throws Exception {
+    public static synchronized String addAuths(String user,String addAuth){
         SecurityOperations securityOperations = accumuloConn.securityOperations();
-        String old = securityOperations.getUserAuthorizations("root").toString();
-        String[] split = old.split(",");
-        for (String s:
-        split) {
-            if(s.equals(addAuth))
-                return old;
+        Authorizations auths = null;
+        try {
+            auths = securityOperations.getUserAuthorizations(user);
+            StringBuilder userAuths = new StringBuilder();
+            if (!auths.isEmpty()) {
+                userAuths.append(auths.toString());
+                userAuths.append(",");
+            }
+            userAuths.append(addAuth);
+            Authorizations newAuth = AuthUtils.parseAuthorizations(userAuths.toString());
+            securityOperations.changeUserAuthorizations(user,newAuth);
+            VertexiumConfig.rootAuth = newAuth.toString();
+            return newAuth.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
-        String newAuth = securityOperations.getUserAuthorizations(user).toString() + "," + addAuth;
-        String[] strings = AuthUtils.splitString(",", newAuth);
-        //权限控制器
-        securityOperations.changeUserAuthorizations(user,new Authorizations(strings));
-        VertexiumConfig.rootAuth = newAuth;
-        return newAuth;
     }
 
     public static Authorizations getRootAuths() throws Exception {

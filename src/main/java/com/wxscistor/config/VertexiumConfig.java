@@ -7,6 +7,7 @@ import org.vertexium.util.VertexiumLoggerFactory;
 
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
@@ -70,4 +71,18 @@ public class VertexiumConfig {
         return graph;
     }
 
+    public static AccumuloGraph createAccumuloGraphWithNoSeach(String tableName){
+        Map config = VertexiumConfig.setTableName(tableName);
+        Iterator<Map.Entry<String, Object>> it = config.entrySet().iterator();
+        while(it.hasNext()){
+            Map.Entry<String, Object> entry = it.next();
+            if(entry.getKey().startsWith("search"))
+                it.remove();
+        }
+
+
+        AccumuloGraphConfiguration graphConfig = new AccumuloGraphConfiguration(config);
+        AccumuloGraph graph = AccumuloGraph.create(graphConfig);
+        return graph;
+    }
 }

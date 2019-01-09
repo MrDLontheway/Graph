@@ -15,11 +15,18 @@
 
     <dependencies>
         <!-- vertexium start -->
+        <!--<dependency>-->
+            <!--<groupId>org.vertexium</groupId>-->
+            <!--<artifactId>vertexium-cli</artifactId>-->
+            <!--<version>${vertexium.version}</version>-->
+        <!--</dependency>-->
+
         <dependency>
             <groupId>org.vertexium</groupId>
             <artifactId>vertexium-cli</artifactId>
             <version>${vertexium.version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.apache.curator</groupId>
             <artifactId>curator-client</artifactId>
@@ -59,6 +66,34 @@
         </dependency>
 
     </dependencies>
+
+    <profiles>
+        <profile>
+            <!-- 本地开发环境 -->
+            <id>dev</id>
+            <properties>
+                <profiles.active>dev</profiles.active>
+            </properties>
+            <activation>
+                <!-- 设置默认激活这个配置 -->
+                <activeByDefault>true</activeByDefault>
+            </activation>
+        </profile>
+        <profile>
+            <!-- 发布环境 -->
+            <id>release</id>
+            <properties>
+                <profiles.active>release</profiles.active>
+            </properties>
+        </profile>
+        <profile>
+            <!-- 测试环境 -->
+            <id>beta</id>
+            <properties>
+                <profiles.active>beta</profiles.active>
+            </properties>
+        </profile>
+    </profiles>
 
     <build>
         <plugins>

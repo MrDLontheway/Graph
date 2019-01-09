@@ -1,8 +1,12 @@
 package com.dl;
 
+import com.wxscistor.config.AccumuloConnector;
 import com.wxscistor.config.VertexiumConfig;
 import com.wxscistor.util.FieldUtils;
-import groovy.lang.Tuple;
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.BatchWriter;
+import org.apache.accumulo.core.security.Authorizations;
 import org.apache.log4j.Level;
 import org.elasticsearch.action.get.GetRequestBuilder;
 import org.elasticsearch.action.search.SearchRequestBuilder;
@@ -24,6 +28,7 @@ import org.vertexium.elasticsearch5.Elasticsearch5SearchIndex;
 import org.vertexium.elasticsearch5.ElasticsearchSearchIndexConfiguration;
 import org.vertexium.elasticsearch5.ElasticsearchSearchQueryBase;
 import org.vertexium.query.*;
+import org.vertexium.search.IndexHint;
 import org.vertexium.search.SearchIndex;
 import org.vertexium.util.VertexiumLogger;
 
@@ -49,6 +54,12 @@ public class DiyGraph {
 
         AccumuloGraph defaultGraph = VertexiumConfig.defaultGraph;
         AccumuloAuthorizations auth = new AccumuloAuthorizations();
+
+        /*VertexBuilder dltest = defaultGraph.prepareVertex("dltest", Visibility.EMPTY);
+        dltest.setProperty("com.dltest.pro.name","123哈哈哈哈",Visibility.EMPTY);
+        dltest.save(auth);
+        defaultGraph.flush();*/
+
         SearchIndex searchIndex = defaultGraph.getSearchIndex();
         Elasticsearch5SearchIndex searchIndex1;
         if (searchIndex instanceof Elasticsearch5SearchIndex) {
@@ -58,8 +69,8 @@ public class DiyGraph {
 //            searchIndex1.addElement(defaultGraph,mev1,auth);
         }
         ElementBuilder<Vertex> vertexElementBuilder = defaultGraph.prepareVertex("testdl", Visibility.EMPTY)
-                .setProperty("dltestdizhi", new org.vertexium.type.GeoPoint(18.0023, 67.0089),new Visibility("fjjtest"))
-                .setProperty("com.scistor.property.jijiandizhi", new org.vertexium.type.GeoPoint(18.55555, 67.0089), Visibility.EMPTY)
+                .setProperty("com.scistor.property.jijiandizhi", new org.vertexium.type.GeoPoint(18.0023, 67.0089),new Visibility("fjjtest"))
+//                .setProperty("com.scistor.property.jijiandizhi", new org.vertexium.type.GeoPoint(18.55555, 67.0089), Visibility.EMPTY)
                 ;
 //                .setProperty("com_scistor_property_dltestdizhi2", new org.vertexium.type.GeoPoint(18.0023, 67.0089), Visibility.EMPTY)
 //                .setProperty("com-scistor-property-dltestdizhi", new org.vertexium.type.GeoPoint(18.0023, 67.0089), Visibility.EMPTY);
@@ -287,14 +298,6 @@ public class DiyGraph {
     }
 
     @Test
-    public void tmp() {
-        Tuple t1 = new Tuple(new Object[]{"t1", "t2", 3});
-        System.out.println(t1.toString());
-
-        System.out.println("finsh");
-    }
-
-    @Test
     public void debugQuery() {
         AccumuloGraph defaultGraph = VertexiumConfig.defaultGraph;
         AccumuloAuthorizations auth = new AccumuloAuthorizations("fjjtest");
@@ -514,8 +517,57 @@ public class DiyGraph {
     }
 
     @Test
-    public void tt1(){
-        AccumuloGraph properties = VertexiumConfig.createAccumuloGraph("storevertexium");
-        System.out.println(VertexiumConfig.properties);
+    public void tt1() throws AccumuloSecurityException, AccumuloException {
+        //1w 132s
+//        for (int i = 0; i < 10000; i++) {
+//            String root = AccumuloConnector.addAuths("root", "fjjtest,111111");
+//        }
+        AccumuloGraph properties = VertexiumConfig.createAccumuloGraph("dlvertexium");
+        ArrayList<ElementBuilder<Vertex>> vs = new ArrayList<>();
+        for (int i = 0; i < 12000; i++) {
+            VertexBuilder vertexBuilder = properties.prepareVertex(Visibility.EMPTY);
+            vertexBuilder.setProperty("com.dl.property.age",11,Visibility.EMPTY);
+            vertexBuilder.setIndexHint(IndexHint.DO_NOT_INDEX);
+            vs.add(vertexBuilder);
+        }
+        properties.getSearchIndex().addElements(properties,properties.addVertices(vs,new AccumuloAuthorizations()),new AccumuloAuthorizations());
+        properties.flush();
+    }
+
+    @Test
+    public void tt2() throws AccumuloSecurityException, AccumuloException {
+        //1w 132s
+//        for (int i = 0; i < 10000; i++) {
+//            String root = AccumuloConnector.addAuths("root", "fjjtest,111111");
+//        }
+        AccumuloGraph properties = VertexiumConfig.createAccumuloGraph("dlvertexium");
+        ArrayList<ElementBuilder<Vertex>> vs = new ArrayList<>();
+        for (int i = 0; i < 12000; i++) {
+            VertexBuilder vertexBuilder = properties.prepareVertex(Visibility.EMPTY);
+            vertexBuilder.setProperty("com.dl.property.age",11,Visibility.EMPTY);
+            vertexBuilder.setIndexHint(IndexHint.DO_NOT_INDEX);
+            vs.add(vertexBuilder);
+        }
+        properties.getSearchIndex().addElements(properties,properties.addVertices(vs,new AccumuloAuthorizations()),new AccumuloAuthorizations());
+        properties.flush();
+    }
+
+    @Test
+    public void quertmp(){
+        AccumuloGraph defaultGraph = VertexiumConfig.defaultGraph;
+        AccumuloAuthorizations auth = new AccumuloAuthorizations("fjjtest");
+
+//        EdgeBuilderByVertexId edgeBuilderByVertexId = defaultGraph.prepareEdge("myedge", "tmp1", "tmp2", "heihei", Visibility.EMPTY);
+//        edgeBuilderByVertexId.save(auth);
+//        defaultGraph.deleteEdge("myedge",auth);
+//        defaultGraph.flush();
+
+        GraphQuery query = defaultGraph.query(auth);
+        query.has("com.dltest.pro.name", Contains.IN, new String[]{"123哈哈哈哈"});
+        SearchResponse seq = null;
+        seq.getHits().getTotalHits();
+        query.vertices().forEach(x->{
+            System.out.println(x);
+        });
     }
 }

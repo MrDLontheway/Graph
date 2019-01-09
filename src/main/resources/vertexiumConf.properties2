@@ -4,8 +4,7 @@ username = root
 password = 123456
 
 #zookeeper
-zookeeperServers = sinan01:2181,sinan02:2181,sinan03:2181
-#zookeeperServers = dailedemacbook-pro.local:2181
+zookeeperServers = dailedeMacBook-Pro.local:2181
 
 #图库主键生成策略   默认UUID去-
 #idgenerator =com.wxscistor.data.Generator.SnowflakeIdWorker
@@ -16,18 +15,15 @@ zookeeperServers = sinan01:2181,sinan02:2181,sinan03:2181
 
 #图库默认表名
 TABLE_NAME_PREFIX = vertexium
-#TABLE_NAME_PREFIX = batchvertexium
+#TABLE_NAME_PREFIX = storevertexium
 
 #图库索引设置 es5  若不设置searh 索引 则 以下配置无效
 search = org.vertexium.elasticsearch5.Elasticsearch5SearchIndex
 #es tcp端口
-search.locations = sinan01:9300,sinan02:9300,sinan03:9300
-#search.locations = dailedemacbook-pro.local:9300
-
+search.locations = dailedeMacBook-Pro.local:9300
 search.clusterName = es
 search.PORT_DEFAULT = 9300
-#search.inProcessNode = dailedemacbook-pro.local
-search.inProcessNode = sinan0,sinan02,sinan03
+search.inProcessNode = dailedeMacBook-Pro.local
 #是否开启点 边 分表策略
-#search.splitEdgesAndVertices = false
+search.splitEdgesAndVertices = false
 #search.queryPageSize = 10
