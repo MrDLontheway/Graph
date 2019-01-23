@@ -2,6 +2,7 @@ package org.vertexium;
 
 import org.vertexium.util.ConvertingIterable;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 
 public interface VertexiumObject extends Comparable {
@@ -187,16 +188,20 @@ public interface VertexiumObject extends Comparable {
     }
 
     //todo DL add
-    default Object getPropertyValue(String key, String name,String defaultAuth) {
+    default Object getPropertyValue(String key, String name,String defaultVis) {
+        if(defaultVis==null){
+            return getPropertyValue(key,name);
+        }
         Iterator<Property> values = getProperties(key, name).iterator();
         Object v = null;
         while (values.hasNext()) {
             Property row = values.next();
-            if (row.getVisibility().getVisibilityString().equals(defaultAuth)) {
+            if (row.getVisibility().getVisibilityString().equals(defaultVis)) {
                 return row.getValue();
             }
         }
         return v;
     }
 
+    Iterable<Property> getProperties(Visibility defaultVis);
 }

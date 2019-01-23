@@ -7,6 +7,10 @@ import org.vertexium.accumulo.AccumuloGraph;
 import org.vertexium.elasticsearch5.Elasticsearch5SearchIndex;
 import org.vertexium.type.GeoPoint;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * @Author: dl
  * @Date: 2018/12/28 14:37
@@ -23,5 +27,16 @@ public class FieldUtils {
             }
         }
         return propertyNames;
+    }
+
+    public static Set<String> getFieldNames(AccumuloGraph graph,AccumuloAuthorizations userAuth){
+        Set<String> result = new HashSet<>();
+        Set<String> allPropertyNames = graph.getSimilarPropertyNames();
+        allPropertyNames.forEach(x->{
+            String[] allMatchingPropertyNames = ((Elasticsearch5SearchIndex) graph.getSearchIndex()).getPropertyNames(graph,x, userAuth);
+            result.addAll(Arrays.asList(allMatchingPropertyNames));
+            }
+        );
+        return result;
     }
 }

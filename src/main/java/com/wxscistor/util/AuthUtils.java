@@ -4,7 +4,6 @@ import org.apache.accumulo.core.security.Authorizations;
 import org.vertexium.accumulo.AccumuloAuthorizations;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * @Author: dl

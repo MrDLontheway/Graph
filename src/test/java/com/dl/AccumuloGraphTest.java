@@ -1,16 +1,19 @@
 package com.dl;
 
 import com.wxscistor.config.VertexiumConfig;
+import com.wxscistor.util.AuthUtils;
 import org.junit.Test;
-import org.vertexium.Graph;
-import org.vertexium.Vertex;
-import org.vertexium.VertexBuilder;
-import org.vertexium.Visibility;
+import org.vertexium.*;
 import org.vertexium.accumulo.AccumuloAuthorizations;
 import org.vertexium.accumulo.AccumuloGraph;
-import org.vertexium.accumulo.LazyPropertyMetadata;
+import org.vertexium.elasticsearch5.Elasticsearch5SearchIndex;
+import org.vertexium.search.IndexHint;
+import org.vertexium.search.SearchIndex;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -18,31 +21,26 @@ import java.util.concurrent.TimeUnit;
 
 public class AccumuloGraphTest {
 
-    public static void main(String[] args) {
-        System.out.println(1);
-    }
     @Test
     public void sycnTest(){
-        AccumuloGraph defaultGraph = VertexiumConfig.createAccumuloGraph("dlvertexium");
+        AccumuloGraph defaultGraph = VertexiumConfig.createAccumuloGraph("batchvertexium");
         AccumuloAuthorizations auth = new AccumuloAuthorizations("fjjtest","vis1","vis22");
-
-
         VertexBuilder vertexBuilder = defaultGraph.prepareVertex(Visibility.EMPTY);
         vertexBuilder.setProperty("com.dl.property.name","代乐",Visibility.EMPTY);
         vertexBuilder.save(auth);
-
         Random r = new Random();
-        int number = 100;
+        int number = 1000000;
         for (int i = 0; i < number; i++) {
             VertexBuilder vertexBuilder2 = defaultGraph.prepareVertex(Visibility.EMPTY);
+            vertexBuilder2.setIndexHint(IndexHint.DO_NOT_INDEX);
             vertexBuilder2.setProperty("com.dl.property.name","代乐",Visibility.EMPTY);
             vertexBuilder2.setProperty("com.dl.property.age",r.nextInt(100),Visibility.EMPTY);
             vertexBuilder2.save(auth);
         }
         defaultGraph.flush();
-        defaultGraph.getVertices(auth).forEach(x->{
-            System.out.println(x);
-        });
+//        defaultGraph.getVertices(auth).forEach(x->{
+//            System.out.println(x);
+//        });
     }
 
     @Test
@@ -99,5 +97,34 @@ public class AccumuloGraphTest {
 
         vertexium.getSearchIndex().addElements(vertexium,vertices,auth);
         vertexium.flush();
+    }
+
+    @Test
+    public void getpon(){
+        AccumuloGraph defaultGraph = VertexiumConfig.createAccumuloGraph("vertexium");
+        AccumuloAuthorizations auth = new AccumuloAuthorizations("fjjtest","vis1","vis22");
+
+        SearchIndex searchIndex = defaultGraph.getSearchIndex();
+        final AccumuloAuthorizations userAuth = auth;
+        String[] fields = new String[]{};
+        if(searchIndex instanceof Elasticsearch5SearchIndex){
+            Set<String> allPropertyNames = defaultGraph.getAllPropertyNames();
+            Collection<String> queryablePropertyNames = ((Elasticsearch5SearchIndex) searchIndex).getQueryablePropertyNames(defaultGraph, userAuth);
+            fields = queryablePropertyNames.toArray(new String[0]);
+        }
+
+    }
+
+    @Test
+    public void emp(){
+        AccumuloGraph defaultGraph = VertexiumConfig.createAccumuloGraph("vertexium");
+        AccumuloAuthorizations auth = new AccumuloAuthorizations("fjjtest","vis1","vis22","111111");
+
+        Vertex event_postevent_c145ab96e2ad06149cf79f981d930029 = defaultGraph.getVertex("EVENT_POSTEVENT_c145ab96e2ad06149cf79f981d930029", auth);
+        Collection<PropertyDefinition> propertyDefinitions = defaultGraph.getPropertyDefinitions();
+        propertyDefinitions.forEach(x->{
+            System.out.println(x.getPropertyName()+"========"+x.isSortable());
+        });
+
     }
 }

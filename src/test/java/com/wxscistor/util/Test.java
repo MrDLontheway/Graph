@@ -1,8 +1,20 @@
 package com.wxscistor.util;
+
+import java.util.ArrayList;
+
 /**
  *@Description:
  */
 public class Test {
+
+    @org.junit.Test
+    public void tst1(){
+        ArrayList arr = new ArrayList();
+
+        arr.add(1);
+        arr.add(2);
+        System.out.println(arr);
+    }
 
     /**
      * @param md5L16

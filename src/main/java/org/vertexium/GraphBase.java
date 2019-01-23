@@ -12,7 +12,7 @@ import org.vertexium.property.StreamingPropertyValueRef;
 import org.vertexium.query.GraphQuery;
 import org.vertexium.query.MultiVertexQuery;
 import org.vertexium.query.SimilarToGraphQuery;
-import org.vertexium.search.IndexHint;
+import org.vertexium.type.GeoPoint;
 import org.vertexium.util.*;
 
 import java.io.InputStream;
@@ -1144,13 +1144,21 @@ public abstract class GraphBase implements Graph {
         }
     }
 
-    //TODO DL edge batchs
-    public Iterable<Edge> addEdges(Iterable<ElementBuilder<Edge>> edges, Authorizations authorizations) {
-        List<Edge> addedEdges = new ArrayList<>();
-        for (ElementBuilder<Edge> edgeBuilder : edges) {
-            addedEdges.add(edgeBuilder.save(authorizations));
-        }
-        return addedEdges;
+    //todo add get all properties names
+    public Set<String> getAllPropertyNames() {
+        return propertyDefinitionCache.keySet();
     }
 
+    //todo add get all properties names
+    public Set<String> getSimilarPropertyNames() {
+        Set<String> rs = new HashSet<>();
+        propertyDefinitionCache.forEach((x,y)->{
+            if(y.getDataType() == Date.class||y.getDataType() == GeoPoint.class){
+                return;
+            }else{
+                rs.add(x);
+            }
+        });
+        return rs;
+    }
 }

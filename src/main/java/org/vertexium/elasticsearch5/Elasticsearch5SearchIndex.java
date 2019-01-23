@@ -1243,7 +1243,8 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
         return propertyNames;
     }
 
-    private static List<String> getQueryableTypeSuffixes(PropertyDefinition propertyDefinition) {
+    //todo to public
+    public static List<String> getQueryableTypeSuffixes(PropertyDefinition propertyDefinition) {
         List<String> typeSuffixes = new ArrayList<>();
         if (propertyDefinition.getDataType() == String.class) {
             if (propertyDefinition.getTextIndexHints().contains(TextIndexHint.EXACT_MATCH)) {

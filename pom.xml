@@ -7,20 +7,37 @@
     <groupId>com.wxscistor</groupId>
     <artifactId>vertexium</artifactId>
     <version>0.1</version>
+<!---->
+    <!--<groupId>com.github.mrdlontheway</groupId>-->
+    <!--<artifactId>AuthGraph</artifactId>-->
+    <!--<version>0.1-SNAPSHOT</version>-->
+<!---->
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/MrDLontheway/Graph</url>
+        <connection>https://github.com/MrDLontheway/Graph.git</connection>
+        <developerConnection>https://github.com/MrDLontheway/Graph</developerConnection>
+    </scm>
 
     <properties>
         <vertexium.version>4.4.0</vertexium.version>
-        <hadoop.version>2.9.0</hadoop.version>
+        <hadoop.version>2.6.4</hadoop.version>
     </properties>
 
     <dependencies>
-        <!-- vertexium start -->
-        <!--<dependency>-->
-            <!--<groupId>org.vertexium</groupId>-->
-            <!--<artifactId>vertexium-cli</artifactId>-->
-            <!--<version>${vertexium.version}</version>-->
-        <!--</dependency>-->
-
         <dependency>
             <groupId>org.vertexium</groupId>
             <artifactId>vertexium-cli</artifactId>
@@ -42,14 +59,15 @@
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
-            <version>2.6.4</version>
+            <version>${hadoop.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
-            <version>2.6.4</version>
+            <version>${hadoop.version}</version>
         </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -57,7 +75,6 @@
             <scope>test</scope>
         </dependency>
         <!-- vertexium end -->
-
 
         <dependency>
             <groupId>org.apache.htrace</groupId>
@@ -96,6 +113,15 @@
     </profiles>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <!--包含文件夹以及子文件夹下所有资源-->
+                    <include>**/*.*</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -111,13 +137,22 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
-                    <excludes>
-                        <exclude>**/application.properties</exclude>
-                        <exclude>**/graph.properties</exclude>
-                        <exclude>**/vertexiumConf.properties</exclude>
-                    </excludes>
+
                 </configuration>
             </plugin>
         </plugins>
     </build>
+
+    <distributionManagement>
+        <repository>
+            <id>snapshots</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+            <!--<url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>-->
+        </repository>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+            <!--<url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>-->
+        </snapshotRepository>
+    </distributionManagement>
 </project>

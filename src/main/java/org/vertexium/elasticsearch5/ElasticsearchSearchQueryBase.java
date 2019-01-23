@@ -1232,10 +1232,10 @@ public class ElasticsearchSearchQueryBase extends QueryBase {
         if (queryParameters instanceof QueryStringQueryParameters) {
             query = createQueryStringQuery((QueryStringQueryParameters) queryParameters);
         } else if (queryParameters instanceof SimilarToTextQueryParameters) {
-            query = createSimilarToTextQuery((SimilarToTextQueryParameters) queryParameters);
             //TODO SimilarToGraphQuery setting
-            ((SimilarToGraphQuery) query).minDocFrequency(0);
-            ((SimilarToGraphQuery) query).minTermFrequency(0);
+            ((SimilarToTextQueryParameters) queryParameters).setMaxDocFrequency(0);
+            ((SimilarToTextQueryParameters) queryParameters).setMinDocFrequency(0);
+            query = createSimilarToTextQuery((SimilarToTextQueryParameters) queryParameters);
         } else {
             throw new VertexiumException("Query parameters not supported of type: " + queryParameters.getClass().getName());
         }

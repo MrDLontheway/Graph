@@ -16,6 +16,7 @@ import org.vertexium.search.IndexHint;
 import org.vertexium.util.PropertyCollection;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -394,7 +395,26 @@ public abstract class AccumuloElement extends ElementBase implements Serializabl
 
     @Override
     protected Iterable<Property> internalGetProperties(String key, String name) {
+        //todo resplace(",","-")
+        name = name.replace(".","-");
         getFetchHints().assertPropertyIncluded(name);
         return this.properties.getProperties(key, name);
+    }
+
+    @Override
+    public Iterable<Property> getProperties(Visibility defaultVis){
+        if(defaultVis==null){
+            return getProperties();
+        }
+        Set<String> propertieNames = this.properties.getPropertieNames();
+        ArrayList<Property> result = new ArrayList<>();
+        propertieNames.forEach(x->{
+            Property property = getProperty(x, defaultVis);
+            if(property==null){
+                property = getProperty(x);
+            }
+            result.add(property);
+        });
+        return result;
     }
 }
