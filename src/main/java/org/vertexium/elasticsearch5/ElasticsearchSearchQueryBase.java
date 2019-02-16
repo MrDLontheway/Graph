@@ -232,7 +232,8 @@ public class ElasticsearchSearchQueryBase extends QueryBase {
             for (String field : fields) {
                 qs = qs.field(getSearchIndex().replaceFieldnameDots(field));
             }
-            qs.allowLeadingWildcard(false);
+            //todo change true
+            qs.allowLeadingWildcard(true);
             return qs;
         }
     }

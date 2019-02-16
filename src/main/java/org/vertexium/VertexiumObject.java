@@ -190,12 +190,13 @@ public interface VertexiumObject extends Comparable {
     //todo DL add
     default Object getPropertyValue(String key, String name,String defaultVis) {
         if(defaultVis==null){
-            return getPropertyValue(key,name);
+            return getPropertyValue(name);
         }
         Iterator<Property> values = getProperties(key, name).iterator();
         Object v = null;
         while (values.hasNext()) {
             Property row = values.next();
+            v = row.getValue();
             if (row.getVisibility().getVisibilityString().equals(defaultVis)) {
                 return row.getValue();
             }
@@ -203,5 +204,7 @@ public interface VertexiumObject extends Comparable {
         return v;
     }
 
-    Iterable<Property> getProperties(Visibility defaultVis);
+    default Iterable<Property> getProperties(Visibility defaultVis){
+        return null;
+    };
 }

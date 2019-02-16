@@ -48,7 +48,7 @@ public class PropertyDefinition implements Serializable {
                 dataType,
                 textIndexHints,
                 null,
-                false
+                true
         );
     }
 

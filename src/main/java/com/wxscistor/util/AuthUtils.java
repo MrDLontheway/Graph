@@ -1,7 +1,10 @@
 package com.wxscistor.util;
 
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.security.Authorizations;
 import org.vertexium.accumulo.AccumuloAuthorizations;
+import org.vertexium.accumulo.AccumuloGraph;
 
 import java.util.Arrays;
 
@@ -49,5 +52,10 @@ public class AuthUtils {
             return Authorizations.EMPTY;
         }
         return new Authorizations(field.split(","));
+    }
+
+    public static AccumuloAuthorizations getRootAuth(AccumuloGraph accumuloGraph) throws AccumuloSecurityException, AccumuloException {
+        Authorizations root = accumuloGraph.getConnector().securityOperations().getUserAuthorizations("root");
+        return new AccumuloAuthorizations(root.toString().split(","));
     }
 }

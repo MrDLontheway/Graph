@@ -2078,7 +2078,12 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
         } else if (Number.class.isAssignableFrom(dataType)) {
             LOGGER.debug("Registering 'double' type for %s", propertyName);
             mapping.field("type", "double");
-        } else {
+        }else if(Object.class.isAssignableFrom(dataType)){
+            LOGGER.debug("Registering 'Object' type for %s", propertyName);
+            mapping.field("type", "keyword");
+        }
+        //todo
+        else {
             throw new VertexiumException("Unexpected value type for property \"" + propertyName + "\": " + dataType.getName());
         }
     }

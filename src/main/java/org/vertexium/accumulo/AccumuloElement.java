@@ -395,8 +395,6 @@ public abstract class AccumuloElement extends ElementBase implements Serializabl
 
     @Override
     protected Iterable<Property> internalGetProperties(String key, String name) {
-        //todo resplace(",","-")
-        name = name.replace(".","-");
         getFetchHints().assertPropertyIncluded(name);
         return this.properties.getProperties(key, name);
     }
@@ -417,4 +415,19 @@ public abstract class AccumuloElement extends ElementBase implements Serializabl
         });
         return result;
     }
+
+//    //todo dl add
+//    @Override
+//    public Iterable<Property> getProperties(Visibility defaultVis){
+//        ArrayList<Property> result = new ArrayList<>();
+//        Set<String> propertieNames = this.properties.getPropertieNames();
+//        propertieNames.forEach(x->{
+//            Property property = getProperty(x, defaultVis);
+//            if(property==null){
+//                property = getProperty(x);
+//            }
+//            result.add(property);
+//        });
+//        return result;
+//    };
 }

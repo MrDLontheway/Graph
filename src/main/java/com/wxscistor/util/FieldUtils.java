@@ -18,9 +18,12 @@ import java.util.Set;
  */
 public class FieldUtils {
     public static String[] getEsFieldNames(AccumuloGraph graph, String fieldName, String... auths){
-        //fieldName = fieldName.replace(".","-");
+        return getEsFieldNames(graph, fieldName, new AccumuloAuthorizations(auths));
+    }
+
+    public static String[] getEsFieldNames(AccumuloGraph graph, String fieldName, AccumuloAuthorizations auths){
         PropertyDefinition propertyDefinition = graph.getPropertyDefinition(fieldName);
-        String[] propertyNames = ((Elasticsearch5SearchIndex) graph.getSearchIndex()).getPropertyNames(graph,fieldName, new AccumuloAuthorizations(auths));
+        String[] propertyNames = ((Elasticsearch5SearchIndex) graph.getSearchIndex()).getPropertyNames(graph,propertyDefinition.getPropertyName(), auths);
         if (propertyDefinition.getDataType() == GeoPoint.class) {
             for (int i = 0; i < propertyNames.length; i++) {
                 propertyNames[i] = propertyNames[i] + "_gp";

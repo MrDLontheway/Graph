@@ -102,17 +102,18 @@ public class AccumuloGraphSort {
 
     @Test
     public void pro(){
-        AccumuloGraph defaultGraph = VertexiumConfig.createAccumuloGraph("dltestvertexium");
-        AccumuloAuthorizations auth = new AccumuloAuthorizations("fjjtest","vis1","vis22");
+        AccumuloGraph defaultGraph = VertexiumConfig.defaultGraph;//VertexiumConfig.createAccumuloGraph("dltestvertexium");
+        AccumuloAuthorizations auth = new AccumuloAuthorizations("knowledgebase_kafka","fjjtest","vis1","vis22");
 
         defaultGraph.getPropertyDefinitions().forEach(x->{
-            System.out.println(x.getPropertyName()+"====="+x.isSortable());
+            PropertyDefinition propertyDefinition = new PropertyDefinition(x.getPropertyName(), x.getDataType(), x.getTextIndexHints(), null, true);
+            defaultGraph.savePropertyDefinition(propertyDefinition);
         });
-        HashSet<TextIndexHint> textIndexHints = new HashSet<>();
-        textIndexHints.add(TextIndexHint.EXACT_MATCH);
-        textIndexHints.add(TextIndexHint.FULL_TEXT);
-//        defaultGraph.savePropertyDefinition(new PropertyDefinition("com-scistor-property-age2",Integer.class,textIndexHints,null,true));
         defaultGraph.flush();
-
+//        HashSet<TextIndexHint> textIndexHints = new HashSet<>();
+//        textIndexHints.add(TextIndexHint.EXACT_MATCH);
+//        textIndexHints.add(TextIndexHint.FULL_TEXT);
+////        defaultGraph.savePropertyDefinition(new PropertyDefinition("com-scistor-property-age2",Integer.class,textIndexHints,null,true));
+//        defaultGraph.flush();
     }
 }

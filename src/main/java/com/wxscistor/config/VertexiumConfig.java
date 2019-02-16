@@ -42,7 +42,6 @@ public class VertexiumConfig {
             vertexiumConfig = ((Map) properties);
             AccumuloGraphConfiguration graphConfig = new AccumuloGraphConfiguration(vertexiumConfig);
             defaultGraph = createAccumuloGraph(vertexiumConfig.getOrDefault("TABLE_NAME_PREFIX",TABLE_NAME_PREFIX).toString());//AccumuloGraph.create(graphConfig);
-            AccumuloConnector.initAccumulo();
         } catch (Exception e) {
             LOGGER.error("vertexiumConf init load failed !",e);
         }

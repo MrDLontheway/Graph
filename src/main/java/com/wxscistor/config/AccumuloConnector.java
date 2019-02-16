@@ -82,8 +82,6 @@ public class AccumuloConnector {
         inst = new ZooKeeperInstance(instanceName, zooServers);
         try {
             AccumuloConnector.accumuloConn = inst.getConnector(user, pwd);
-            VertexiumConfig.rootAuth = accumuloConn.securityOperations().getUserAuthorizations(user).toString();
-            System.out.println("连接accumulo!");
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("连接异常accumulo!");
