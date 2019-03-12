@@ -29,7 +29,7 @@ public class AccumuloGraphTest {
         vertexBuilder.setProperty("com.dl.property.name","代乐",Visibility.EMPTY);
         vertexBuilder.save(auth);
         Random r = new Random();
-        int number = 1000000;
+        int number = 2000000;
         for (int i = 0; i < number; i++) {
             VertexBuilder vertexBuilder2 = defaultGraph.prepareVertex(Visibility.EMPTY);
             vertexBuilder2.setIndexHint(IndexHint.DO_NOT_INDEX);

@@ -390,10 +390,10 @@ public class ElasticsearchSearchQueryBase extends QueryBase {
             }
         }
         q.addSort("_score", SortOrder.DESC);
-        if (!sortedById) {
+//        if (!sortedById) {//todo dlremove remove sort by score
             // If an id sort isn't specified, default is to sort by score and then sort id by ascending order after specified sorts
-            q.addSort("_uid", SortOrder.ASC);
-        }
+//            q.addSort("_uid", SortOrder.ASC);
+//        }
     }
 
     @Override
@@ -1096,6 +1096,8 @@ public class ElasticsearchSearchQueryBase extends QueryBase {
     }
 
     private QueryBuilder getFilterForProperty(Compare compare, HasValueContainer has, String propertyName, Object value) {
+        //todo dl
+        PropertyDefinition definition = this.getGraph().getPropertyDefinition(propertyName.substring(0,propertyName.lastIndexOf("_")));
         if (Element.ID_PROPERTY_NAME.equals(propertyName)) {
             propertyName = Elasticsearch5SearchIndex.ELEMENT_ID_FIELD_NAME;
         } else if (Edge.LABEL_PROPERTY_NAME.equals(propertyName)) {
@@ -1111,10 +1113,9 @@ public class ElasticsearchSearchQueryBase extends QueryBase {
                     .minimumShouldMatch(1);
         } else if (has.value instanceof IpV4Address) {
             // this value is converted to a string and should not use the exact match field
-        } else if (value instanceof String || value instanceof String[]) {
+        } else if ((value instanceof String ||value instanceof String[]) && definition.getTextIndexHints().contains(TextIndexHint.EXACT_MATCH)) {//todo changge EXACT_MATCH  match
             propertyName = propertyName + Elasticsearch5SearchIndex.EXACT_MATCH_PROPERTY_NAME_SUFFIX;
         }
-
         switch (compare) {
             case EQUAL:
                 if (has.value instanceof DateOnly) {

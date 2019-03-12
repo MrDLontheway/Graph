@@ -1,7 +1,9 @@
 package com.wxscistor.util;
 
+import com.wxscistor.config.VertexiumConfig;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.admin.SecurityOperations;
 import org.apache.accumulo.core.security.Authorizations;
 import org.vertexium.accumulo.AccumuloAuthorizations;
 import org.vertexium.accumulo.AccumuloGraph;
@@ -57,5 +59,49 @@ public class AuthUtils {
     public static AccumuloAuthorizations getRootAuth(AccumuloGraph accumuloGraph) throws AccumuloSecurityException, AccumuloException {
         Authorizations root = accumuloGraph.getConnector().securityOperations().getUserAuthorizations("root");
         return new AccumuloAuthorizations(root.toString().split(","));
+    }
+
+    public static void addRootAuth(String[] addauths) throws AccumuloSecurityException, AccumuloException {
+        String addAuth = "";
+        for (String auth:addauths) {
+            addAuth += auth;
+        }
+        AccumuloGraph graph = VertexiumConfig.defaultGraph;
+        SecurityOperations securityOperations = graph.getConnector().securityOperations();
+        String user = "root";
+        Authorizations auths = null;
+        try {
+            auths = securityOperations.getUserAuthorizations(user);
+            StringBuilder userAuths = new StringBuilder();
+            if (!auths.isEmpty()) {
+                userAuths.append(auths.toString());
+                userAuths.append(",");
+            }
+            userAuths.append(addAuth);
+            Authorizations newAuth = AuthUtils.parseAuthorizations(userAuths.toString());
+            securityOperations.changeUserAuthorizations(user,newAuth);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void addRootAuth(String addAuth) throws AccumuloSecurityException, AccumuloException {
+        AccumuloGraph graph = VertexiumConfig.defaultGraph;
+        SecurityOperations securityOperations = graph.getConnector().securityOperations();
+        String user = "root";
+        Authorizations auths = null;
+        try {
+            auths = securityOperations.getUserAuthorizations(user);
+            StringBuilder userAuths = new StringBuilder();
+            if (!auths.isEmpty()) {
+                userAuths.append(auths.toString());
+                userAuths.append(",");
+            }
+            userAuths.append(addAuth);
+            Authorizations newAuth = AuthUtils.parseAuthorizations(userAuths.toString());
+            securityOperations.changeUserAuthorizations(user,newAuth);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

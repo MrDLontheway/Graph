@@ -5,6 +5,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Longs;
+import com.wxscistor.Generator.SnowflakeIdWorker;
+import com.wxscistor.util.AuthUtils;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.admin.NewTableConfiguration;
@@ -99,7 +101,9 @@ public class AccumuloGraph extends GraphBaseWithSearchIndex implements Traceable
     private final int numberOfQueryThreads;
     private final AccumuloGraphMetadataStore graphMetadataStore;
     private boolean distributedTraceEnabled;
-
+    //todo add long id
+    private com.wxscistor.Generator.SnowflakeIdWorker idWorker = new SnowflakeIdWorker();
+    private boolean isRandomLongId = false;
     protected AccumuloGraph(AccumuloGraphConfiguration config, Connector connector) {
         super(config);
         this.connector = connector;
@@ -163,9 +167,12 @@ public class AccumuloGraph extends GraphBaseWithSearchIndex implements Traceable
 
         BatchWriterConfig writerConfig = getConfiguration().createBatchWriterConfig();
         this.batchWriter = connector.createMultiTableBatchWriter(writerConfig);
+        //todo add random long id
+        this.isRandomLongId = config.getBoolean("isRandomLongId",false);
     }
 
     public static AccumuloGraph create(AccumuloGraphConfiguration config) {
+        System.setProperty("es.set.netty.runtime.available.processors", "false");
         if (config == null) {
             throw new IllegalArgumentException("config cannot be null");
         }
@@ -322,6 +329,10 @@ public class AccumuloGraph extends GraphBaseWithSearchIndex implements Traceable
                 Span trace = Trace.start("prepareVertex");
                 trace.data("vertexId", finalVertexId);
                 try {
+                    //todo add long id
+                    if(isRandomLongId){
+                        this.setProperty("__LongId",idWorker.nextLongId(),visibility);
+                    }
                     // This has to occur before createVertex since it will mutate the properties
                     getElementMutationBuilder().saveVertexBuilder(AccumuloGraph.this, this, timestampLong);
 
@@ -730,12 +741,43 @@ public class AccumuloGraph extends GraphBaseWithSearchIndex implements Traceable
         final long timestampLong = timestamp;
 
         final String finalEdgeId = edgeId;
+        AccumuloGraph graph = this;
         return new AccumuloEdgeBuilderByVertexId(finalEdgeId, outVertexId, inVertexId, label, visibility, elementMutationBuilder) {
             @Override
             public Edge save(Authorizations authorizations) {
                 Span trace = Trace.start("prepareEdge");
                 trace.data("edgeId", finalEdgeId);
                 try {
+                    //todo add edge long id
+                    if(isRandomLongId){
+                        this.setProperty("__LongId",idWorker.nextLongId(),visibility);
+                        AccumuloAuthorizations rootAuth = null;
+                        try {
+                            rootAuth = AuthUtils.getRootAuth(graph);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        Vertex out = getVertex(outVertexId, rootAuth);
+                        Vertex in = getVertex(inVertexId, rootAuth);
+                        Object longId = null;
+                        Object inlongId = null;
+                        if(out!=null){
+                            longId = out.getPropertyValue("__LongId");
+                        }else {
+                            Vertex save = prepareVertex(outVertexId, Visibility.EMPTY).save(rootAuth);
+                            longId = save.getPropertyValue("__LongId");
+                        }
+                        if(in!=null){
+                            inlongId = in.getPropertyValue("__LongId");
+                        }else {
+                            Vertex save = prepareVertex(inVertexId, Visibility.EMPTY).save(rootAuth);
+                            inlongId = save.getPropertyValue("__LongId");
+                        }
+                        if(longId!=null&&inlongId!=null){
+                            this.setProperty("__OUTLongId",(Long)longId,visibility);
+                            this.setProperty("__INLongId",(Long)inlongId,visibility);
+                        }
+                    }
                     // This has to occur before createEdge since it will mutate the properties
                     elementMutationBuilder.saveEdgeBuilder(AccumuloGraph.this, this, timestampLong);
 
@@ -796,7 +838,16 @@ public class AccumuloGraph extends GraphBaseWithSearchIndex implements Traceable
                             }
                         }
                     };
-
+                    //todo add edge long id
+                    if(isRandomLongId){
+                        this.setProperty("__LongId",idWorker.nextLongId(),visibility);
+                        Object longId = outVertex.getPropertyValue("__LongId");
+                        Object inlongId = inVertex.getPropertyValue("__LongId");
+                        if(longId!=null&&inlongId!=null){
+                            this.setProperty("__OUTLongId",(Long)longId,visibility);
+                            this.setProperty("__INLongId",(Long)inlongId,visibility);
+                        }
+                    }
                     // This has to occur before createEdge since it will mutate the properties
                     elementMutationBuilder.saveEdgeBuilder(AccumuloGraph.this, this, timestampLong);
 

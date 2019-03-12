@@ -40,7 +40,7 @@ public abstract class AccumuloElement extends ElementBase implements Serializabl
     public static final Text METADATA_COLUMN_FAMILY = ElementIterator.METADATA_COLUMN_FAMILY;
     public static final Text METADATA_COLUMN_QUALIFIER = ElementIterator.METADATA_COLUMN_QUALIFIER;
 
-    private final Graph graph;
+    private static Graph graph;
     private final String id;
     private Visibility visibility;
     private final long timestamp;

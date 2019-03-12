@@ -5,6 +5,7 @@ import org.vertexium.Visibility;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @Author: dl
@@ -16,37 +17,8 @@ public class GraphEdge implements Serializable{
     public String fromKey;  //出发点
     public String toKey; //目标点
     public String label; //边关系类型
-    public transient Visibility visibility; //可视化权限
-    public transient Map<String,Visibility> propertiesVisibility = new HashMap<>();
-
-    public Map<String, Visibility> getPropertiesVisibility() {
-        return propertiesVisibility;
-    }
-
-    public void setPropertiesVisibility(Map<String, Visibility> propertiesVisibility) {
-        this.propertiesVisibility = propertiesVisibility;
-    }
-
-    public Visibility getVisibility() {
-        return visibility;
-    }
-
-    public void setVisibility(Visibility visibility) {
-        this.visibility = visibility;
-    }
-
-    public GraphEdge() {
-        super();
-    }
-
-    public GraphEdge(String rowKey, String fromKey, String toKey, String label) {
-        this.rowKey = rowKey;
-        this.fromKey = fromKey;
-        this.toKey = toKey;
-        this.label = label;
-    }
-
-    public Map<String,Object> properties = new HashMap<>();
+    public Visibility visibility; //可视化权限
+    public Map<String,GraphProperty> properties = new HashMap<>();
 
     public String getRowKey() {
         return rowKey;
@@ -80,11 +52,34 @@ public class GraphEdge implements Serializable{
         this.label = label;
     }
 
-    public Map<String, Object> getProperties() {
+    public Visibility getVisibility() {
+        return visibility;
+    }
+
+    public void setVisibility(Visibility visibility) {
+        this.visibility = visibility;
+    }
+
+    public Map<String, GraphProperty> getProperties() {
         return properties;
     }
 
-    public void setProperties(Map<String, Object> properties) {
+    public void setProperties(Map<String, GraphProperty> properties) {
         this.properties = properties;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(fromKey,toKey,label,visibility);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        GraphEdge ge = (GraphEdge) obj;
+        if(this.fromKey.equals(ge.fromKey)&&this.toKey.equals(ge.toKey)&&this.label.equals(ge.label)&&this.visibility==ge.visibility){
+            return true;
+        }else {
+            return false;
+        }
     }
 }

@@ -981,6 +981,10 @@ public abstract class GraphBase implements Graph {
         }
         LOGGER.warn("creating default property definition because a previous definition could not be found for property \"" + name + "\" of type " + valueClass);
         propertyDefinition = new PropertyDefinition(name, valueClass, TextIndexHint.ALL);
+        //todo add [] propertyDefinition
+        if(valueClass.getName().equals("[Ljava.lang.String;")){
+            propertyDefinition = new PropertyDefinition(name, valueClass, EnumSet.of(TextIndexHint.FULL_TEXT));
+        }
         savePropertyDefinition(propertyDefinition);
     }
 

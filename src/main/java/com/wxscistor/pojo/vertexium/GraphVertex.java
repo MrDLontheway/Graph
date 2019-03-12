@@ -5,6 +5,7 @@ import org.vertexium.Visibility;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @Author: dl
@@ -13,15 +14,15 @@ import java.util.Map;
  */
 public class GraphVertex implements Serializable{
     public String rowKey;
-    public transient Visibility visibility; //可视化权限
-    public transient Map<String,Visibility> propertiesVisibility = new HashMap<>();
+    public Visibility visibility; //可视化权限
+    public Map<String,GraphProperty> properties = new HashMap<>();
 
-    public Map<String, Visibility> getPropertiesVisibility() {
-        return propertiesVisibility;
+    public String getRowKey() {
+        return rowKey;
     }
 
-    public void setPropertiesVisibility(Map<String, Visibility> propertiesVisibility) {
-        this.propertiesVisibility = propertiesVisibility;
+    public void setRowKey(String rowKey) {
+        this.rowKey = rowKey;
     }
 
     public Visibility getVisibility() {
@@ -32,29 +33,26 @@ public class GraphVertex implements Serializable{
         this.visibility = visibility;
     }
 
-    public GraphVertex() {
-        super();
-    }
-
-    public GraphVertex(String rowKey) {
-        this.rowKey = rowKey;
-    }
-
-    public Map<String,Object> properties = new HashMap<>();
-
-    public String getRowKey() {
-        return rowKey;
-    }
-
-    public void setRowKey(String rowKey) {
-        this.rowKey = rowKey;
-    }
-
-    public Map<String, Object> getProperties() {
+    public Map<String, GraphProperty> getProperties() {
         return properties;
     }
 
-    public void setProperties(Map<String, Object> properties) {
+    public void setProperties(Map<String, GraphProperty> properties) {
         this.properties = properties;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(rowKey,visibility);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        GraphVertex gv = (GraphVertex) obj;
+        if(this.rowKey.equals(gv.rowKey)&&this.visibility==gv.visibility){
+            return true;
+        }else {
+            return false;
+        }
     }
 }

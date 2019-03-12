@@ -2,6 +2,7 @@ package com.dl;
 
 import com.wxscistor.config.AccumuloConnector;
 import com.wxscistor.config.VertexiumConfig;
+import com.wxscistor.util.AuthUtils;
 import com.wxscistor.util.FieldUtils;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
@@ -569,5 +570,13 @@ public class DiyGraph {
         query.vertices().forEach(x->{
             System.out.println(x);
         });
+    }
+
+    @Test
+    public void tp1() throws AccumuloSecurityException, AccumuloException {
+        AccumuloGraph defaultGraph = VertexiumConfig.createAccumuloGraph("vertexium");
+        AccumuloAuthorizations rootAuth = AuthUtils.getRootAuth(defaultGraph);
+        Vertex vertex = defaultGraph.getVertex("8815ea2df3ce72b8afeb9dceae7b7809", rootAuth);
+        System.out.println(1);
     }
 }
