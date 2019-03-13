@@ -1,6 +1,8 @@
 package com.dl;
 
 import com.wxscistor.config.VertexiumConfig;
+import com.wxscistor.pojo.vertexium.GraphProperty;
+import com.wxscistor.util.RelationUtils;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.junit.Test;
@@ -167,5 +169,16 @@ public class GraphBatch {
         System.out.println(vertex);
         System.out.println(totalHits);
 
+    }
+
+    @Test
+    public void relation() throws AccumuloSecurityException, AccumuloException {
+        AccumuloGraph most = VertexiumConfig.createAccumuloGraph("mostvertexium");
+        AccumuloAuthorizations root = new AccumuloAuthorizations(most.getConnector().securityOperations().getUserAuthorizations("root").toString().split(","));
+
+        RelationUtils relationUtils = new RelationUtils(most, root);
+        Query otherV = relationUtils.findOtherV("549971081616687107", "friend", Direction.BOTH, new GraphProperty("age", 10, Compare.LESS_THAN));
+        long totalHits = otherV.vertices().getTotalHits();
+        System.out.println(totalHits);
     }
 }

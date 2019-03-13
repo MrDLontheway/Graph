@@ -16,6 +16,10 @@ public class GraphProperty implements Serializable{
     public Visibility visibility;
     public Predicate predicate;
 
+    public GraphProperty(){
+        super();
+    }
+
     public GraphProperty(String key, Object value, Visibility visibility) {
         this.key = key;
         this.value = value;

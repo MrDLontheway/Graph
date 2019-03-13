@@ -6,6 +6,7 @@ import com.wxscistor.config.VertexiumConfig;
 import org.vertexium.Graph;
 
 import java.io.Serializable;
+import java.util.Random;
 
 public abstract class AbsClassA implements Serializable {
     public String name = "123";
@@ -16,8 +17,10 @@ public abstract class AbsClassA implements Serializable {
     }
 
     public static void main(String[] args) throws InterruptedException {
+        Random random = new Random();
         while (true){
-            System.out.println("echo ================");
+            int i = random.nextInt(10000);
+            System.out.println("echo ================"+i);
             Thread.sleep(1000);
         }
     }
