@@ -19,17 +19,9 @@ public class QuerTest {
     public void termKeyWord(){
         AccumuloAuthorizations auth = new AccumuloAuthorizations("fjjtest");
         AccumuloGraph graph = VertexiumConfig.defaultGraph;
-        GraphQuery query = VertexiumConfig.defaultGraph.query("期昌路376号",auth);
+        GraphQuery query = VertexiumConfig.defaultGraph.query("",auth);
         SearchIndex searchIndex = graph.getSearchIndex();
-        String[] fields = new String[]{};
-        if(searchIndex instanceof Elasticsearch5SearchIndex){
-            Collection<String> queryablePropertyNames = ((Elasticsearch5SearchIndex) searchIndex).getQueryablePropertyNames(graph, auth);
-            fields = queryablePropertyNames.toArray(new String[0]);
-        }
-
-        query.vertices().forEach(x->{
-            System.out.println(x);
-        });
+        query.vertices().forEach(System.out::println);
     }
 
     @Test

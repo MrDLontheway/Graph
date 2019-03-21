@@ -47,6 +47,7 @@ import org.vertexium.elasticsearch5.utils.PagingIterable;
 import org.vertexium.query.*;
 import org.vertexium.scoring.ScoringStrategy;
 import org.vertexium.type.*;
+import org.vertexium.type.GeoPolygon;
 import org.vertexium.util.IterableUtils;
 import org.vertexium.util.JoinIterable;
 import org.vertexium.util.VertexiumLogger;

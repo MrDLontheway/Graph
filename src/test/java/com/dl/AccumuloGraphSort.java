@@ -7,7 +7,6 @@ import org.vertexium.accumulo.AccumuloAuthorizations;
 import org.vertexium.accumulo.AccumuloGraph;
 import org.vertexium.query.GraphQuery;
 import org.vertexium.query.Query;
-import org.vertexium.query.QueryResultsIterable;
 import org.vertexium.query.SortDirection;
 
 import java.util.*;

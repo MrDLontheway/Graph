@@ -55,6 +55,7 @@ import org.vertexium.query.*;
 import org.vertexium.search.SearchIndex;
 import org.vertexium.search.SearchIndexWithVertexPropertyCountByValue;
 import org.vertexium.type.*;
+import org.vertexium.type.GeoPolygon;
 import org.vertexium.util.ConvertingIterable;
 import org.vertexium.util.IOUtils;
 import org.vertexium.util.VertexiumLogger;
@@ -1014,6 +1015,11 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
         Map<String, Object> fieldsMap = new HashMap<>();
         List<Property> streamingProperties = new ArrayList<>();
         for (Property property : properties) {
+            //todo
+//            PropertyDefinition propertyDefinition = getPropertyDefinition(graph, property.getName());
+//            if(propertyDefinition!=null && propertyDefinition.getTextIndexHints().size()==0){
+//                continue;
+//            }
             if (property.getValue() != null && shouldIgnoreType(property.getValue().getClass())) {
                 continue;
             }

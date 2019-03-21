@@ -78,8 +78,6 @@ public class VertexiumConfig {
             if(entry.getKey().startsWith("search"))
                 it.remove();
         }
-
-
         AccumuloGraphConfiguration graphConfig = new AccumuloGraphConfiguration(config);
         AccumuloGraph graph = AccumuloGraph.create(graphConfig);
         return graph;

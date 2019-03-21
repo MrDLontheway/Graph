@@ -1,7 +1,6 @@
 package com.wxscistor.util;
 
 import com.wxscistor.config.VertexiumConfig;
-import com.wxscistor.pojo.vertexium.GraphProperty;
 import com.wxscistor.pojo.vertexium.GraphRelation;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
@@ -9,12 +8,9 @@ import org.junit.Test;
 import org.vertexium.Direction;
 import org.vertexium.accumulo.AccumuloAuthorizations;
 import org.vertexium.accumulo.AccumuloGraph;
-import org.vertexium.query.Compare;
 import org.vertexium.query.Query;
 
 import java.util.List;
-
-import static org.junit.Assert.*;
 
 public class RelationUtilsTest {
 

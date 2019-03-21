@@ -5,7 +5,6 @@ import com.wxscistor.pojo.vertexium.GraphRelation;
 import org.vertexium.Direction;
 import org.vertexium.Edge;
 import org.vertexium.Vertex;
-import org.vertexium.VertexiumObject;
 import org.vertexium.accumulo.AccumuloAuthorizations;
 import org.vertexium.accumulo.AccumuloGraph;
 import org.vertexium.query.Query;
