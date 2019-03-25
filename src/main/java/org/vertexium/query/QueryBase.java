@@ -6,12 +6,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import org.vertexium.*;
 import org.vertexium.scoring.ScoringStrategy;
-import org.vertexium.type.GeoPoint;
 import org.vertexium.type.GeoShape;
 import org.vertexium.util.IterableUtils;
 import org.vertexium.util.SelectManyIterable;
 import org.vertexium.util.StreamUtils;
-import sun.jvm.hotspot.oops.GenerateOopMap;
 
 import java.io.IOException;
 import java.util.*;
