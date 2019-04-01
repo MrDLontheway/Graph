@@ -1,6 +1,7 @@
 package com.wxscistor.util;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  *@Description:
@@ -11,9 +12,13 @@ public class Test {
     public void tst1(){
         ArrayList arr = new ArrayList();
 
+        Date date = new Date(0, 0, 0);
+        Date date1 = new Date();
+        long parse = java.sql.Date.valueOf("2018-07-12").getTime();
+        Date date2 = new Date(parse);
         arr.add(1);
         arr.add(2);
-        System.out.println(arr);
+        System.out.println(parse);
     }
 
     /**
