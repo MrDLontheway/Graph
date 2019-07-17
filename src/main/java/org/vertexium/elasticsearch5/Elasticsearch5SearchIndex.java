@@ -905,7 +905,7 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
             }
             jsonBuilder.field(hiddenVisibilityPropertyName, true);
         }
-
+        //todo getPropertiesAsFields
         Map<String, Object> fields = getPropertiesAsFields(graph, element.getProperties());
         addFieldsMap(jsonBuilder, fields);
 
@@ -1138,7 +1138,8 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
     }
 
     protected String addVisibilityToPropertyName(Graph graph, Property property) {
-        String propertyName = property.getName();
+        //todo reindex propertyName .
+        String propertyName = property.getName().replace(".","-");
         Visibility propertyVisibility = property.getVisibility();
         return addVisibilityToPropertyName(graph, propertyName, propertyVisibility);
     }
@@ -2063,6 +2064,8 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
         } else if (dataType == Date.class || dataType == DateOnly.class) {
             LOGGER.debug("Registering 'date' type for %s", propertyName);
             mapping.field("type", "date");
+            //todo Date ES mapping format
+//            mapping.field("format","yyyy-MM-dd HH:mm:ss");
         } else if (dataType == Boolean.class || dataType == Boolean.TYPE) {
             LOGGER.debug("Registering 'boolean' type for %s", propertyName);
             mapping.field("type", "boolean");

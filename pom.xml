@@ -6,7 +6,7 @@
 
     <groupId>com.wxscistor</groupId>
     <artifactId>vertexium</artifactId>
-    <version>0.1</version>
+    <version>0.1.1</version>
 <!---->
     <!--<groupId>com.github.mrdlontheway</groupId>-->
     <!--<artifactId>AuthGraph</artifactId>-->
@@ -123,6 +123,20 @@
             </resource>
         </resources>
         <plugins>
+            <!-- Source attach plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
