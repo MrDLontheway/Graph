@@ -1,5 +1,6 @@
 package com.dl.speed;
 
+import com.wxscistor.concurrent.MGraphDBManager;
 import com.wxscistor.config.VertexiumConfig;
 import org.vertexium.*;
 import org.vertexium.accumulo.AccumuloAuthorizations;
@@ -14,16 +15,29 @@ import java.util.*;
 public class ReciveHandler implements Runnable{
     private AccumuloGraph graph = null;
     private int vnum = 0;
-    private int bulkNumber = 100000;
+    private int bulkNumber = 10000;
     private boolean isIndex = false;
+    String graphName = null;
 
     ReciveHandler(String graphName, int vnum, boolean isIndex){
         this.vnum = vnum;
+        this.graphName = graphName;
         this.isIndex = isIndex;
         if(isIndex){
             graph = VertexiumConfig.createAccumuloGraph(graphName);
         }else{
             graph = VertexiumConfig.createAccumuloGraphWithNoSeach(graphName);
+        }
+    }
+
+    ReciveHandler(AccumuloGraph graph, int vnum, boolean isIndex){
+        this.vnum = vnum;
+        this.graphName = graphName;
+        this.isIndex = isIndex;
+        if(isIndex){
+            this.graph = graph;
+        }else{
+            this.graph = graph;
         }
     }
 
@@ -121,38 +135,44 @@ public class ReciveHandler implements Runnable{
     @Override
     public void run() {
         inint();
-        ArrayList<org.vertexium.ElementBuilder<Vertex>> vertexBuilders = new ArrayList<>();
+        ArrayList<org.vertexium.ElementBuilder<Element>> vertexBuilders = new ArrayList<>();
         Visibility fjjtest = new Visibility("admin");
         AccumuloAuthorizations auth = new AccumuloAuthorizations("admin","vis1","vis22");
         for (int i = 0; i < vnum; i++) {
             if(i%bulkNumber==0 && i!=0){
-                ArrayList<ElementBuilder<Edge>> edgeBuilders = new ArrayList<>();
+                System.out.println(new Date().toLocaleString()+"create 10w data!!!!!!!!!!");
+                ArrayList<ElementBuilder<Element>> edgeBuilders = new ArrayList<>();
                 //生成随机边
                 for (int j = 0; j < bulkNumber/3; j++) {
                     String out = getRandomeValue(vertexBuilders).getElementId();
                     String in = getRandomeValue(vertexBuilders).getElementId();
-                    EdgeBuilderByVertexId builder = graph.prepareEdge(out, in, getRandomeValue(linkUris), Visibility.EMPTY);
+                    ElementBuilder builder = graph.prepareEdge(out, in, getRandomeValue(linkUris), Visibility.EMPTY);
                     builder.addPropertyValue("time_start","time_start",new Date(),fjjtest);
                     builder.addPropertyValue("time_end","time_end",new Date(),fjjtest);
                     builder.setIndexHint(IndexHint.DO_NOT_INDEX);
                     edgeBuilders.add(builder);
                 }
-                if(isIndex){
-                    graph.addVerticesAsync(vertexBuilders,auth);
-                    graph.addEdgesAsync(edgeBuilders,auth);
-                }else {
-                    graph.addVertices(vertexBuilders,auth);
-                    edgeBuilders.forEach(builder->{
-                        builder.save(auth);
-                    });
-                }
-                graph.flush();
+                System.out.println(new Date().toLocaleString()+"start 2 thread   SaveDataHandler SaveDataHandler SaveDataHandler");
+                MGraphDBManager.asyncBulkData(graph,auth,edgeBuilders);
+                MGraphDBManager.asyncBulkData(graph,auth,vertexBuilders);
+//                new Thread(new SaveDataHandler(graph,auth,edata)).run();
+//                new Thread(new SaveDataHandler(graph,auth,vdata)).run();
+//                if(isIndex){
+//                    graph.addVerticesAsync(vertexBuilders,auth);
+//                    graph.addEdgesAsync(edgeBuilders,auth);
+//                }else {
+//                    graph.addVertices(vertexBuilders,auth);
+//                    edgeBuilders.forEach(builder->{
+//                        builder.save(auth);
+//                    });
+//                }
+//                graph.flush();
                 edgeBuilders = new ArrayList<>();
                 vertexBuilders = new ArrayList<>();
             }
             String uri = getRandomeValue(objectUris);
             String uuid = UUID.randomUUID().toString().replace("-", "");
-            VertexBuilder vertexBuilder = graph.prepareVertex(uuid, Visibility.EMPTY);
+            ElementBuilder vertexBuilder = graph.prepareVertex(uuid, Visibility.EMPTY);
             int i1 = r.nextInt(100);
             int i2 = r.nextInt(100);
             vertexBuilder.addPropertyValue("rowkey","rowkey",uuid,fjjtest);
@@ -181,6 +201,7 @@ public class ReciveHandler implements Runnable{
             vertexBuilder.setIndexHint(IndexHint.DO_NOT_INDEX);
             vertexBuilders.add(vertexBuilder);
         }
+//        this.graph.flushGraph();
         System.out.println(new Date().toLocaleString()+Thread.currentThread().getName()+":finshed!!!!!!!!   save:"+vnum+"data");
     }
 }

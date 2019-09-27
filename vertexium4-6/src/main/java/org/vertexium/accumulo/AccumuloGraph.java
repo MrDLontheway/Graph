@@ -40,6 +40,7 @@ import org.vertexium.accumulo.iterator.util.ByteArrayWrapper;
 import org.vertexium.accumulo.iterator.util.ByteSequenceUtils;
 import org.vertexium.accumulo.keys.KeyHelper;
 import org.vertexium.accumulo.util.*;
+import org.vertexium.elasticsearch5.Elasticsearch5SearchIndex;
 import org.vertexium.event.*;
 import org.vertexium.historicalEvent.HistoricalEvent;
 import org.vertexium.historicalEvent.HistoricalEventId;
@@ -48,6 +49,7 @@ import org.vertexium.property.MutableProperty;
 import org.vertexium.property.StreamingPropertyValue;
 import org.vertexium.property.StreamingPropertyValueRef;
 import org.vertexium.search.IndexHint;
+import org.vertexium.search.SearchIndex;
 import org.vertexium.util.*;
 
 import java.io.IOException;
@@ -107,6 +109,7 @@ public class AccumuloGraph extends GraphBaseWithSearchIndex implements Traceable
     //todo add long id
     private SnowflakeIdWorker idWorker = new SnowflakeIdWorker();
     private boolean isRandomLongId = false;
+    private final String durability;
 
     protected AccumuloGraph(AccumuloGraphConfiguration config, Connector connector) {
         super(config);
@@ -171,7 +174,14 @@ public class AccumuloGraph extends GraphBaseWithSearchIndex implements Traceable
 
         BatchWriterConfig writerConfig = getConfiguration().createBatchWriterConfig();
         //关闭预写日志提高 速率
-        writerConfig.setDurability(Durability.NONE);
+        this.durability = getConfiguration().getString("batchwriter.durability","DEFAULT");
+        switch (this.durability){
+            case "DEFAULT" : writerConfig.setDurability(Durability.NONE);
+            case "NONE" : writerConfig.setDurability(Durability.NONE);
+            case "LOG" : writerConfig.setDurability(Durability.LOG);
+            case "FLUSH" : writerConfig.setDurability(Durability.FLUSH);
+            case "SYNC" : writerConfig.setDurability(Durability.SYNC);
+        }
         this.batchWriter = connector.createMultiTableBatchWriter(writerConfig);
         //todo add random long id
         this.isRandomLongId = config.getBoolean("isRandomLongId",false);
@@ -641,6 +651,54 @@ public class AccumuloGraph extends GraphBaseWithSearchIndex implements Traceable
 
             if (hasEventListeners()) {
                 queueEvent(new DeleteVertexEvent(this, vertex));
+            }
+        } finally {
+            trace.stop();
+        }
+    }
+
+    //TODO support deleteVertexs
+    public void deleteVertexs(final Iterable<Vertex> vertices, Authorizations authorizations) {
+        Span trace = Trace.start("deleteVertexs");
+        List<Element> deleteElements = new ArrayList<>();
+        try {
+            vertices.forEach(vertex -> {
+                checkNotNull(vertex, "vertex cannot be null");
+                trace.data("vertexId", vertex.getId());
+                // Delete all edges that this vertex participates.
+                for (Edge edge : vertex.getEdges(Direction.BOTH, authorizations)) {
+                    deleteEdgeWithoutSearch(edge, authorizations);
+                    deleteElements.add(edge);
+                }
+                addMutations(VertexiumObjectType.VERTEX, elementMutationBuilder.getDeleteRowMutation(vertex.getId()));
+                if (hasEventListeners()) {
+                    queueEvent(new DeleteVertexEvent(this, vertex));
+                }
+                deleteAllExtendedDataForElement(vertex, authorizations);
+                deleteElements.add(vertex);
+
+            });
+            SearchIndex searchIndex = getSearchIndex();
+            if(searchIndex instanceof Elasticsearch5SearchIndex){
+                ((Elasticsearch5SearchIndex) searchIndex).deleteElements(this, deleteElements, authorizations);
+            }
+        } finally {
+            trace.stop();
+        }
+    }
+
+    //TODO support deleteEdges
+    public void deleteEdges(final Iterable<Edge> edges, Authorizations authorizations) {
+        Span trace = Trace.start("deleteEdges");
+        List<Element> deleteElements = new ArrayList<>();
+        try {
+            edges.forEach(edge -> {
+                deleteEdgeWithoutSearch(edge,authorizations);
+                deleteElements.add(edge);
+            });
+            SearchIndex searchIndex = getSearchIndex();
+            if(searchIndex instanceof Elasticsearch5SearchIndex){
+                ((Elasticsearch5SearchIndex) searchIndex).deleteElements(this, deleteElements, authorizations);
             }
         } finally {
             trace.stop();
@@ -1315,6 +1373,34 @@ public class AccumuloGraph extends GraphBaseWithSearchIndex implements Traceable
         try {
             getSearchIndex().deleteElement(this, edge, authorizations);
 
+            ColumnVisibility visibility = visibilityToAccumuloVisibility(edge.getVisibility());
+
+            Mutation outMutation = new Mutation(edge.getVertexId(Direction.OUT));
+            outMutation.putDelete(AccumuloVertex.CF_OUT_EDGE, new Text(edge.getId()), visibility);
+
+            Mutation inMutation = new Mutation(edge.getVertexId(Direction.IN));
+            inMutation.putDelete(AccumuloVertex.CF_IN_EDGE, new Text(edge.getId()), visibility);
+
+            addMutations(VertexiumObjectType.VERTEX, outMutation, inMutation);
+
+            deleteAllExtendedDataForElement(edge, authorizations);
+
+            // Deletes everything else related to edge.
+            addMutations(VertexiumObjectType.EDGE, elementMutationBuilder.getDeleteRowMutation(edge.getId()));
+
+            if (hasEventListeners()) {
+                queueEvent(new DeleteEdgeEvent(this, edge));
+            }
+        } finally {
+            trace.stop();
+        }
+    }
+
+    private void deleteEdgeWithoutSearch(Edge edge, Authorizations authorizations) {
+        checkNotNull(edge);
+        Span trace = Trace.start("deleteEdge");
+        trace.data("edgeId", edge.getId());
+        try {
             ColumnVisibility visibility = visibilityToAccumuloVisibility(edge.getVisibility());
 
             Mutation outMutation = new Mutation(edge.getVertexId(Direction.OUT));
@@ -2741,6 +2827,63 @@ public class AccumuloGraph extends GraphBaseWithSearchIndex implements Traceable
             protected Iterator<Map.Entry<Key, Value>> createIterator() {
                 try {
                     scanner = createVertexScanner(fetchHints, SINGLE_VERSION, null, endTime, range, authorizations);
+                    return scanner.iterator();
+                } catch (RuntimeException ex) {
+                    if (ex.getCause() instanceof AccumuloSecurityException) {
+                        throw new SecurityVertexiumException("Could not get vertices with authorizations: " + authorizations, authorizations, ex.getCause());
+                    }
+                    throw ex;
+                }
+            }
+
+            @Override
+            public void close() {
+                super.close();
+                if (scanner != null) {
+                    scanner.close();
+                }
+                if (trace != null) {
+                    trace.stop();
+                }
+                GRAPH_LOGGER.logEndIterator(System.currentTimeMillis() - timerStartTime);
+            }
+        };
+    }
+
+    //TODO add time range
+    public Iterable<Vertex> getVertices(final long startTime,final long endTime, AccumuloAuthorizations auth) {
+        Span trace = Trace.start("getVertices");
+        org.apache.accumulo.core.data.Range range = new org.apache.accumulo.core.data.Range((String)null,(String)null);
+        return getVerticesInRange(trace,range,getDefaultFetchHints(),startTime,endTime,auth);
+    }
+
+    protected CloseableIterable<Vertex> getVerticesInRange(
+            final Span trace,
+            final org.apache.accumulo.core.data.Range range,
+            final FetchHints fetchHints,
+            final Long startTime,
+            final Long endTime,
+            final Authorizations authorizations
+    ) {
+        final long timerStartTime = System.currentTimeMillis();
+
+        return new LookAheadIterable<Map.Entry<Key, Value>, Vertex>() {
+            public ScannerBase scanner;
+
+            @Override
+            protected boolean isIncluded(Map.Entry<Key, Value> src, Vertex dest) {
+                return dest != null;
+            }
+
+            @Override
+            protected Vertex convert(Map.Entry<Key, Value> next) {
+                return createVertexFromVertexIteratorValue(next.getKey(), next.getValue(), fetchHints, authorizations);
+            }
+
+            @Override
+            protected Iterator<Map.Entry<Key, Value>> createIterator() {
+                try {
+                    scanner = createVertexScanner(fetchHints, SINGLE_VERSION, startTime, endTime, range, authorizations);
                     return scanner.iterator();
                 } catch (RuntimeException ex) {
                     if (ex.getCause() instanceof AccumuloSecurityException) {

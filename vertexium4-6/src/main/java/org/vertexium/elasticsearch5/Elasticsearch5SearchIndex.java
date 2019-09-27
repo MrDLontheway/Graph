@@ -7,14 +7,18 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.SettableFuture;
+import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.cluster.node.info.NodeInfo;
 import org.elasticsearch.action.admin.cluster.node.info.NodesInfoResponse;
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
@@ -27,6 +31,9 @@ import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.geo.builders.CircleBuilder;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.common.unit.ByteSizeUnit;
+import org.elasticsearch.common.unit.ByteSizeValue;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -123,6 +130,16 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
     private Integer logRequestSizeLimit;
     private final Elasticsearch5ExceptionHandler exceptionHandler;
 
+    //======new config
+    //1000
+    private int bulkActions = 1000;
+    //new ByteSizeValue(5, ByteSizeUnit.MB)
+    private ByteSizeValue bulkSize = new ByteSizeValue(5, ByteSizeUnit.MB);
+    //TimeValue.timeValueSeconds(5);
+    private TimeValue bulkflushInterval = TimeValue.timeValueSeconds(5);
+    private int bulkConcurrentRequests = 1;
+
+
     public Elasticsearch5SearchIndex(Graph graph, GraphConfiguration config) {
         this.graph = graph;
         this.config = new ElasticsearchSearchIndexConfiguration(graph, config);
@@ -136,9 +153,12 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
         this.logRequestSizeLimit = this.config.getLogRequestSizeLimit();
         this.exceptionHandler = this.config.getExceptionHandler(graph);
         this.flushObjectQueue = new FlushObjectQueue(this);
-
+        this.bulkActions = this.config.getGraphConfiguration().getInt("search.bulkActions",1000);
+        this.bulkSize = new ByteSizeValue(this.config.getGraphConfiguration().getInt("search.bulkSize",5), ByteSizeUnit.MB);;
+        this.bulkflushInterval = TimeValue.timeValueSeconds(this.config.getGraphConfiguration().getInt("search.bulkSize",5));
+        this.bulkConcurrentRequests = this.config.getGraphConfiguration().getInt("search.bulkSize",1);
         storePainlessScript("deleteFieldsFromDocumentScript", "remove-fields-from-document.painless");
-        storePainlessScript("updateFieldsOnDocumentScript", "update-fields-on-document.painless");
+//        storePainlessScript("updateFieldsOnDocumentScript", "update-fields-on-document.painless");
     }
 
     private void storePainlessScript(String scriptId, String scriptSourceName) {
@@ -169,6 +189,13 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
         Settings settings = tryReadSettingsFromFile(config);
         if (settings == null) {
             Settings.Builder settingsBuilder = Settings.builder();
+//            settingsBuilder.put("thread_pool.bulk.size" ,9);
+//            settingsBuilder.put("thread_pool.bulk.queue_size", 10000);
+//            settingsBuilder.put("thread_pool.index.size" , 9);
+//            settingsBuilder.put("thread_pool.index.queue_size" , 10000);
+//            settingsBuilder.put("thread_pool.search.size" ,5);
+//            settingsBuilder.put("thread_pool.search.queue_size", 100);
+            settingsBuilder.put("client.transport.sniff", true);
             if (config.getClusterName() != null) {
                 settingsBuilder.put("cluster.name", config.getClusterName());
             }
@@ -1299,6 +1326,7 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
         }
         return propertyNames;
     }
+
     //todo to public
     public static List<String> getQueryableTypeSuffixes(PropertyDefinition propertyDefinition) {
         List<String> typeSuffixes = new ArrayList<>();
@@ -1686,10 +1714,12 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
 
     public IndexInfo ensureIndexCreatedAndInitialized(String indexName) {
         Map<String, IndexInfo> indexInfos = getIndexInfos();
+
         IndexInfo indexInfo = indexInfos.get(indexName);
         if (indexInfo != null && indexInfo.isElementTypeDefined()) {
             return indexInfo;
         }
+
         return initializeIndex(indexInfo, indexName);
     }
 
@@ -1799,6 +1829,7 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
 
     @Override
     public void addElements(Graph graph, Iterable<? extends Element> elements, Authorizations authorizations) {
+        long time = new Date().getTime();
         bulkUpdate(graph, new ConvertingIterable<Element, UpdateRequest>(elements) {
             @Override
             protected UpdateRequest convert(Element element) {
@@ -1807,6 +1838,7 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
                 return request;
             }
         });
+        System.out.println(new Date().getTime() - time + "/ms" + "   end bulk");
     }
 
     private void logRequestSize(String elementId, UpdateRequest request) {
@@ -1840,7 +1872,11 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
                         failures.add(failure);
                     }
                 }
-        );
+        )
+                .setBulkActions(bulkActions)
+                .setBulkSize(bulkSize)
+                .setFlushInterval(bulkflushInterval)
+                .setConcurrentRequests(bulkConcurrentRequests);
         BulkProcessor bulkProcessor = builder.build();
         for (UpdateRequest updateRequest : updateRequests) {
             bulkProcessor.add(updateRequest);
@@ -1863,6 +1899,44 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
         }
     }
 
+    private void bulkDelete(Graph graph, Iterable<DeleteRequest> deleteRequests) {
+        int totalCount = 0;
+        List<Throwable> failures = new ArrayList<>();
+        BulkProcessor.Builder builder = BulkProcessor.builder(
+                getClient(),
+                new DefaultBulkProcessorListener() {
+                    @Override
+                    public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
+                        LOGGER.error("Failed bulk request: %s", request.toString(), failure);
+                        failures.add(failure);
+                    }
+                }
+        )
+                .setBulkActions(bulkActions)
+                .setBulkSize(bulkSize)
+                .setFlushInterval(bulkflushInterval)
+                .setConcurrentRequests(bulkConcurrentRequests);
+        BulkProcessor bulkProcessor = builder.build();
+        for (DeleteRequest deleteRequest : deleteRequests) {
+            bulkProcessor.add(deleteRequest);
+            totalCount++;
+        }
+        bulkProcessor.flush();
+        try {
+            // We should never wait this long, but setting it high just to be sure everything is finished
+            bulkProcessor.awaitClose(10, TimeUnit.MINUTES);
+        } catch (InterruptedException ex) {
+            throw new VertexiumException("Failed bulk delete, waiting for close", ex);
+        }
+        LOGGER.debug("deleted %d elements", totalCount);
+        if (failures.size() > 0) {
+            throw new VertexiumException(String.format("Failed bulk delete (failures: %d)", failures.size()));
+        }
+
+        if (getConfig().isAutoFlush()) {
+            flush(graph);
+        }
+    }
     @Override
     public MultiVertexQuery queryGraph(Graph graph, String[] vertexIds, String queryString, Authorizations authorizations) {
         return new ElasticsearchSearchMultiVertexQuery(
@@ -2291,7 +2365,7 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
 
     @SuppressWarnings("unused")
     protected void createIndex(String indexName) throws IOException {
-        CreateIndexResponse createResponse = client.admin().indices().prepareCreate(indexName)
+        CreateIndexRequestBuilder createIndexRequestBuilder = client.admin().indices().prepareCreate(indexName)
                 .setSettings(XContentFactory.jsonBuilder()
                         .startObject()
                         .startObject("analysis")
@@ -2307,8 +2381,25 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
                         .field("index.mapping.total_fields.limit", getConfig().getIndexMappingTotalFieldsLimit())
                         .field("refresh_interval", getConfig().getIndexRefreshInterval())
                         .endObject()
-                )
-                .execute().actionGet();
+                );
+//        CreateIndexResponse createResponse = client.admin().indices().prepareCreate(indexName)
+//                .setSettings(XContentFactory.jsonBuilder()
+//                        .startObject()
+//                        .startObject("analysis")
+//                        .startObject("normalizer")
+//                        .startObject(LOWERCASER_NORMALIZER_NAME)
+//                        .field("type", "custom")
+//                        .array("filter", "lowercase")
+//                        .endObject()
+//                        .endObject()
+//                        .endObject()
+//                        .field("number_of_shards", getConfig().getNumberOfShards())
+//                        .field("number_of_replicas", getConfig().getNumberOfReplicas())
+//                        .field("index.mapping.total_fields.limit", getConfig().getIndexMappingTotalFieldsLimit())
+//                        .field("refresh_interval", getConfig().getIndexRefreshInterval())
+//                        .endObject()
+//                )
+//                .execute().actionGet();
 
         ClusterHealthResponse health = client.admin().cluster().prepareHealth(indexName)
                 .setWaitForGreenStatus()
@@ -2362,4 +2453,23 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
                 .collect(Collectors.toList())
                 .toArray(new String[allMatchingPropertyNames.length]);
     }
+
+    //TODO add deleteElements
+    public void deleteElements(Graph graph,final Iterable<Element> elements, Authorizations authorizations) {
+        String indexName = getIndexName(null);
+        List<DeleteRequest> deletes = new ArrayList<>();
+        elements.forEach(element -> {
+            String docId = getIdStrategy().createElementDocId(element);
+            if (MUTATION_LOGGER.isTraceEnabled()) {
+                LOGGER.trace("deleting document %s (docId: %s)", element.getId(), docId);
+            }
+            DeleteRequest request = getClient()
+                    .prepareDelete(indexName, getIdStrategy().getType(), docId)
+                    .request();
+            deletes.add(request);
+        });
+        bulkDelete(graph,deletes);
+        getIndexRefreshTracker().pushChange(indexName);
+    }
+
 }

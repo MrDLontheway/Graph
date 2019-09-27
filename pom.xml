@@ -32,10 +32,12 @@
         <connection>https://github.com/MrDLontheway/Graph.git</connection>
         <developerConnection>https://github.com/MrDLontheway/Graph</developerConnection>
     </scm>
+
     <modules>
         <module>SpeedMark</module>
         <module>vertexium4-4</module>
         <module>vertexium4-6</module>
+        <module>loader</module>
     </modules>
 
     <properties>
@@ -248,16 +250,16 @@
     </distributionManagement>
 
     <repositories>
-        <repository>
-            <id>elasticsearch-releases</id>
-            <url>https://artifacts.elastic.co/maven</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
+        <!--<repository>-->
+            <!--<id>elasticsearch-releases</id>-->
+            <!--<url>https://artifacts.elastic.co/maven</url>-->
+            <!--<releases>-->
+                <!--<enabled>true</enabled>-->
+            <!--</releases>-->
+            <!--<snapshots>-->
+                <!--<enabled>false</enabled>-->
+            <!--</snapshots>-->
+        <!--</repository>-->
     </repositories>
     <!--<distributionManagement>-->
         <!--<repository>-->

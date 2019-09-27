@@ -3,11 +3,14 @@ package com.com.wxscistor;
 import com.dl.DiyGraph;
 import com.dl.QuerTest;
 import com.wxscistor.config.VertexiumConfig;
+import com.wxscistor.util.AuthUtils;
+import org.junit.Test;
 import org.vertexium.*;
 import org.vertexium.accumulo.AccumuloAuthorizations;
 import org.vertexium.accumulo.AccumuloGraph;
 import org.vertexium.query.Compare;
 import org.vertexium.query.GraphQuery;
+import org.vertexium.query.QueryResultsIterable;
 
 import java.io.Serializable;
 
@@ -50,4 +53,6 @@ public abstract class AbsClassA implements Serializable {
 //            Thread.sleep(1000);
 //        }
     }
+
+
 }

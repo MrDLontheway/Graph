@@ -1,6 +1,5 @@
 package com.wxscistor.util;
 
-import com.wxscistor.config.VertexiumConfig;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.admin.SecurityOperations;
@@ -61,12 +60,12 @@ public class AuthUtils {
         return new AccumuloAuthorizations(root.toString().split(","));
     }
 
-    public static void addRootAuth(String[] addauths) throws AccumuloSecurityException, AccumuloException {
+    public static void addRootAuth(AccumuloGraph accumuloGraph,String[] addauths) throws AccumuloSecurityException, AccumuloException {
         String addAuth = "";
         for (String auth:addauths) {
             addAuth += auth;
         }
-        AccumuloGraph graph = VertexiumConfig.defaultGraph;
+        AccumuloGraph graph = accumuloGraph;
         SecurityOperations securityOperations = graph.getConnector().securityOperations();
         String user = "root";
         Authorizations auths = null;
@@ -85,8 +84,8 @@ public class AuthUtils {
         }
     }
 
-    public static void addRootAuth(String addAuth) throws AccumuloSecurityException, AccumuloException {
-        AccumuloGraph graph = VertexiumConfig.defaultGraph;
+    public static void addRootAuth(AccumuloGraph accumuloGraph,String addAuth) throws AccumuloSecurityException, AccumuloException {
+        AccumuloGraph graph = accumuloGraph;
         SecurityOperations securityOperations = graph.getConnector().securityOperations();
         String user = "root";
         Authorizations auths = null;
