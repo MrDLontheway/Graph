@@ -2,7 +2,7 @@ package com.wxstc.graph
 
 import java.util
 
-import com.alibaba.fastjson.{JSON, JSONObject, TypeReference}
+import com.alibaba.fastjson.{JSON, TypeReference}
 import com.wuxi.scistor.compass.importer.common.dto.CompassObjectDTO
 import com.wuxi.scistor.compass.importer.common.dto.form.TaskMappingFormDTO
 import com.wuxi.scistor.compass.importer.common.pojo.{CompassInstanceCooker, CsvHandler}
@@ -13,7 +13,6 @@ import com.wxscistor.util.AuthUtils
 import org.apache.commons.collections.CollectionUtils
 import org.apache.spark.sql.SparkSession
 import org.vertexium.accumulo.{AccumuloAuthorizations, AccumuloGraph}
-import org.vertexium.elasticsearch5.IndexRefreshTracker
 import org.vertexium.{Element, ElementBuilder}
 
 import scala.util.control.Breaks._
@@ -28,20 +27,8 @@ object LoadData {
       */
     val spark = SparkSession
       .builder()
-//      .master("local")
       .appName(this.getClass.getName)
       .config("spark.logConf", true)
-      //      .config("spark.sql.warehouse.dir", "hdfs://192.168.31.162:8020/user/hive/warehouse")
-//      .config("hive.metastore.uris", "thrift://192.168.31.164:9083")
-      //      .config("hive.metastore.warehouse.dir", "/user/hive/warehouse")
-//      .enableHiveSupport()
-      //      .config("spark.eventLog.enabled",true)
-//      .config("spark.sql.shuffle.partitions", "5")
-//      .config("es.nodes", "192.168.31.12")
-//      .config("es.port", "9200")
-//      .config("es.nodes.wan.only", "true")
-//      .config("es.net.http.auth.user", "root")
-//      .config("es.net.http.auth.pass", "111111")
       .getOrCreate()
     spark.sparkContext.setLogLevel("INFO")
 
@@ -98,7 +85,7 @@ object LoadData {
     val res = new java.util.ArrayList[org.vertexium.ElementBuilder[Element]]()
     val service = new CompassResolveServiceImpl()
     service.setAccumuloGraph(graph)
-    val dsr = VertexiumConfig.properties.getProperty("data.dsr","")
+    val dsr = StartProcess.dsr
 
     data.asScala.foreach(v => {
       v._2.asScala.foreach(vertex => {
@@ -123,7 +110,7 @@ object LoadData {
     val res = new java.util.ArrayList[org.vertexium.ElementBuilder[Element]]()
     val service = new CompassResolveServiceImpl()
     service.setAccumuloGraph(graph)
-    val dsr = VertexiumConfig.properties.getProperty("data.dsr","")
+    val dsr = StartProcess.dsr
 
     val linkres = CompassInstanceCooker.cookCompassLinkInstance(mapping, data)
     linkres.asScala.foreach(edge => {

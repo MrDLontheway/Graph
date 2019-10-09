@@ -1318,6 +1318,7 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
             if (isReservedFieldName(propertyNameNoVisibility)) {
                 continue;
             }
+
             for (String hash : propertyNameVisibilitiesStore.getHashes(graph, propertyNameNoVisibility, authorizations)) {
                 for (String typeSuffix : queryableTypeSuffixes) {
                     propertyNames.add(propertyNameNoVisibility + "_" + hash + typeSuffix);
@@ -1829,7 +1830,7 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
 
     @Override
     public void addElements(Graph graph, Iterable<? extends Element> elements, Authorizations authorizations) {
-        long time = new Date().getTime();
+//        long time = new Date().getTime();
         bulkUpdate(graph, new ConvertingIterable<Element, UpdateRequest>(elements) {
             @Override
             protected UpdateRequest convert(Element element) {
@@ -1838,7 +1839,7 @@ public class Elasticsearch5SearchIndex implements SearchIndex, SearchIndexWithVe
                 return request;
             }
         });
-        System.out.println(new Date().getTime() - time + "/ms" + "   end bulk");
+//        System.out.println(new Date().getTime() - time + "/ms" + "   end bulk");
     }
 
     private void logRequestSize(String elementId, UpdateRequest request) {

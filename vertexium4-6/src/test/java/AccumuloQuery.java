@@ -10,11 +10,16 @@ import org.vertexium.accumulo.AccumuloAuthorizations;
 import org.vertexium.accumulo.AccumuloGraph;
 import org.vertexium.elasticsearch5.Elasticsearch5SearchIndex;
 import org.vertexium.elasticsearch5.ElasticsearchSearchIndexConfiguration;
+import org.vertexium.query.GraphQuery;
 import org.vertexium.query.Query;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.wxscistor.util.AuthUtils.*;
+import static org.vertexium.elasticsearch5.ElasticsearchPropertyNameInfo.PROPERTY_NAME_PATTERN;
 
 public class AccumuloQuery {
     @Test
@@ -113,6 +118,7 @@ public class AccumuloQuery {
     @Test
     public void addPro() throws AccumuloSecurityException, AccumuloException {
         AccumuloGraph sinanspeed = VertexiumConfig.createAccumuloGraph("sinanspeed");
+
         AccumuloAuthorizations rootAuth = getRootAuth(sinanspeed);
 
         sinanspeed.savePropertyDefinition(new PropertyDefinition("dl123",String.class, TextIndexHint.NONE));
@@ -123,5 +129,34 @@ public class AccumuloQuery {
         dl123.save(rootAuth);
         sinanspeed.flush();
         System.out.println(rootAuth);
+    }
+
+    @Test
+    public void tmp1() throws Exception {
+        Matcher m = Pattern.compile("^(.*?)(_([0-9a-f]{32}))?(_[a-z]|\\.[a-z]+)?$").matcher("com-3c3cafcd59029cf102f6c0d8e0f28048-1property-1idcard");
+        String string = "";
+        if (m.matches()) {
+            string = m.group(1);
+        }
+        System.out.println(string);
+        System.exit(1);
+
+
+        AccumuloGraph compass = VertexiumConfig.createAccumuloGraph("compass");
+        AccumuloAuthorizations rootAuth = getRootAuth(compass);
+
+        Vertex v = null;
+//        if(compass.getSearchIndex() instanceof Elasticsearch5SearchIndex){
+//            String s = ((Elasticsearch5SearchIndex) compass.getSearchIndex()).removeVisibilityFromPropertyName("com.scistor.property.sourceowner");
+//            System.out.println(s);
+//        }
+
+//        Collection<PropertyDefinition> propertyDefinitions = compass.getPropertyDefinitions();
+//        System.out.println(1);
+        GraphQuery query = compass.query("*1*", rootAuth);
+        query.vertices().forEach(x->{
+            System.out.println(x);
+        });
+
     }
 }
