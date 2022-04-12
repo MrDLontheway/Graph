@@ -42,7 +42,7 @@
 
     <properties>
         <vertexium.version>4.4.0</vertexium.version>
-        <hadoop.version>2.6.4</hadoop.version>
+        <hadoop.version>3.2.3</hadoop.version>
     </properties>
 
     <dependencies>
